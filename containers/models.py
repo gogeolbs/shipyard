@@ -28,6 +28,7 @@ class Container(models.Model):
     protected = models.BooleanField(default=False)
     synced = models.BooleanField(default=False, blank=True,
             help_text='Whether the agent has synced the container info')
+    provisioning = models.TextField(blank=True, null=True, default='')
 
     def __unicode__(self):
         d = self.get_short_id()
@@ -54,6 +55,9 @@ class Container(models.Model):
         if self.meta:
             meta = json.loads(self.meta)
         return meta
+
+    def get_provisioning(self):
+      return self.provisioning
 
     def get_short_id(self):
         return self.container_id[:12]

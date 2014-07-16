@@ -16,6 +16,8 @@ run (cd $SHIPYARD_APP_DIR && python manage.py syncdb --noinput)
 run (cd $SHIPYARD_APP_DIR && python manage.py migrate)
 run (cd $SHIPYARD_APP_DIR && python manage.py update_admin_user --username=admin --password=shipyard)
 
+run cd /opt; git clone https://github.com/jpetazzo/pipework.git
+
 volume /var/log/shipyard
 expose 8000
 workdir /app

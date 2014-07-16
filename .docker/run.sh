@@ -18,6 +18,15 @@ SUPERVISOR_CONF=/opt/supervisor.conf
 REDIS_HOST="${REDIS_PORT_6379_TCP_ADDR:-$REDIS_HOST}"
 REDIS_PORT=${REDIS_PORT_6379_TCP_PORT:-$REDIS_PORT}
 
+# ---------------------------------------------------------------------------- #
+
+echo "Waiting network interface"
+cd /opt/pipework; ./pipework --wait
+cd "Network interface is up and running!"
+sleep 5 # Just wait a few seconds to network to be really up!
+
+# ---------------------------------------------------------------------------- #
+
 echo "App Components: ${APP_COMPONENTS}"
 
 # check for db link

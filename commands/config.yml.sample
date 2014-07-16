@@ -1,0 +1,4 @@
+user: your_user
+pass: your_pass
+docker_bridge: docker0
+net_interface: eth0

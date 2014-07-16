@@ -13,3 +13,4 @@ newrelic.ini
 *.ve
 static_root/*
 src/*
+*config.yml

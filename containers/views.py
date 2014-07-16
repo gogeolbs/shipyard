@@ -37,6 +37,8 @@ import json
 import tempfile
 import shlex
 
+IP_PATTERN = '192.168.88'
+
 def handle_upload(f):
     tmp_file = tempfile.mktemp()
     with open(tmp_file, 'w') as d:
@@ -48,8 +50,10 @@ def handle_upload(f):
 def index(request):
     hosts = Host.objects.filter(enabled=True)
     show_all = True if request.GET.has_key('showall') else False
+
     containers = Container.objects.filter(host__in=hosts, is_running=True).\
             order_by('description')
+
     ctx = {
         'hosts': hosts,
         'containers': containers,
@@ -84,6 +88,7 @@ def container_details(request, container_id=None):
         'cpu_metrics': json.dumps(cpu_data),
         'mem_metrics': json.dumps(mem_data),
     }
+
     return render_to_response('containers/container_details.html', ctx,
         context_instance=RequestContext(request))
 
@@ -100,46 +105,85 @@ def create_container(request):
             description = form.data.get('description')
             environment = form.data.get('environment')
             command = form.data.get('command')
+            cpu_shares = int(form.data.get('cpu_shares'))
             memory = form.data.get('memory', 0)
+            ip_range = form.data.get('ip_range').split('-')
             links = form.data.get('links', None)
             volume = form.data.get('volume')
             volumes_from = form.data.get('volumes_from')
             ports = form.data.get('ports', '').split()
-            hosts = form.data.getlist('hosts')
+            hosts = sorted(form.data.getlist('hosts'))
+            network_disabled = form.data.get('network_disabled')
             private = form.data.get('private')
             privileged = form.data.get('privileged')
             user = None
             status = False
-            for i in hosts:
+            
+            # ********************************************** #
+
+            ips = self.configure_ips(ip_range)
+
+            # ********************************************** #
+
+            for index, i in enumerate(hosts):
                 host = Host.objects.get(id=i)
+                print 'host: {}'.format(host.hostname)
                 if private:
                     user = request.user
                 try:
+                    if not name:
+                        name = 'maq-{}'.format(index + 1)
+
+                    prov_obj = {
+                        'hostname': host.hostname,
+                        'name': name,
+                        'ip': ips[index]
+                    } 
+
                     c_id, status = host.create_container(image, command, ports,
                         environment=environment, memory=memory,
                         description=description, volumes=volume,
                         volumes_from=volumes_from, privileged=privileged,
                         links=links, name=name, owner=user,
-                        hostname=hostname)
+                        hostname=hostname, network_disabled=network_disabled,
+                        cpu_shares=4, prov_obj=prov_obj)
                     messages.add_message(request, messages.INFO, _('Created') + ' {0}'.format(
                         image))
+
                 except Exception, e:
                     print(e)
                     messages.error(request, e)
                     status = False
+
+
             if not hosts:
                 messages.add_message(request, messages.ERROR, _('No hosts selected'))
             return redirect(reverse('containers.views.index'))
+
     ctx = {
         'form_create_container': form,
     }
     return render_to_response('containers/create_container.html', ctx,
         context_instance=RequestContext(request))
 
+def configure_ips(self, ip_range):
+    ips = []
+    ip_range = map(int, ip_range)
+
+    if ip_range[0] == ip_range[1]:
+      ip_range[1] = ip_range[1] + 1
+
+    ips_range = range(ip_range[0], ip_range[1])
+
+    for ip in ips_range:
+        ips.append('{}.{}'.format(IP_PATTERN, ip))
+
+    return ips
+
 @login_required
 def container_info(request, container_id=None):
     '''
-    Gets / Sets container metatdata
+    Gets / Sets container metadata
 
     '''
     if request.method == 'POST':
@@ -299,4 +343,3 @@ def toggle_protect_container(request, host_id, container_id):
         container.protected = False
     container.save()
     return HttpResponse('done')
-

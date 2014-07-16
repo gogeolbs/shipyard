@@ -41,8 +41,10 @@ class CreateContainerForm(forms.Form):
     hostname = forms.CharField(required=False)
     description = forms.CharField(required=False)
     command = forms.CharField(required=False)
-    memory = forms.CharField(required=False, max_length=8,
+    cpu_shares = forms.ChoiceField(required=True)
+    memory = forms.CharField(required=False, initial='4096', max_length=8,
         help_text='Memory in MB')
+    ip_range = forms.CharField(required=True, help_text=_('range used to define IPs (i.e. 10-20 --> 192.168.88.10 ... 192.168.88.19)'))
     environment = forms.CharField(required=False,
         help_text='key=value space separated pairs')
     ports = forms.CharField(required=False, help_text=_('space separated (i.e. 8000 8001:8001 127.0.0.1:80:80 )'))
@@ -51,6 +53,7 @@ class CreateContainerForm(forms.Form):
     volumes_from = forms.CharField(required=False,
         help_text='mount volumes from specified container')
     hosts = forms.MultipleChoiceField(required=True)
+    network_disabled = forms.BooleanField(required=False, initial=True)
     private = forms.BooleanField(required=False)
     privileged = forms.BooleanField(required=False)
 
@@ -65,15 +68,18 @@ class CreateContainerForm(forms.Form):
                 'hostname',
                 'command',
                 'description',
+                'cpu_shares',
                 'memory',
+                'ip_range',
                 'environment',
                 'ports',
                 'links',
                 'volume',
                 'volumes_from',
                 'hosts',
+                'network_disabled',
                 'private',
-                'privileged',
+                'privileged'
             ),
             FormActions(
                 Submit('save', _('Create'), css_class="btn btn-lg btn-success"),
@@ -87,6 +93,7 @@ class CreateContainerForm(forms.Form):
             [x for x in get_image_choices()]
         self.fields['hosts'].choices = \
             [(x.id, x.name) for x in get_available_hosts()]
+        self.fields['cpu_shares'].choices = [(4 , 4)] + [(2, 2), (8, 8)]
 
 class ImportRepositoryForm(forms.Form):
     repository = forms.CharField(help_text='i.e. ehazlett/logstash')
@@ -130,4 +137,3 @@ class ImageBuildForm(forms.Form):
         self.helper.help_text_inline = True
         self.fields['hosts'].choices = \
             [(x.id, x.name) for x in get_available_hosts()]
-

@@ -359,7 +359,7 @@ def setup_shipyard(redis_host=None, admin_pass=None, tag='latest', debug=False):
 
 @task()
 def setup(**options):
-    """Setup a full prodction deployment
+    """Setup a full production deployment
 
     Options:
         tag         - "latest" or "dev" or any valid git tag.

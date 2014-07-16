@@ -21,6 +21,7 @@ from django.utils.translation import ugettext as _
 from shipyard.exceptions import ProtectedContainerError
 from uuid import uuid4
 from containers.models import Container
+from commands.models import Commands
 import shlex
 import hashlib
 import requests
@@ -77,7 +78,7 @@ class Host(models.Model):
     def create_container(self, image=None, command=None, ports=[],
         environment=[], memory=0, description='', volumes=None, volumes_from='',
         privileged=False, binds=None, links=None, name=None, owner=None,
-        hostname=None, **kwargs):
+        hostname=None, network_disabled=True, cpu_shares=4, prov_obj=None, **kwargs):
         if isinstance(command, str) and command.strip() == '':
             command = None
         if isinstance(environment, str) and environment.strip() == '':
@@ -139,8 +140,9 @@ class Host(models.Model):
             cnt = c.create_container(image=image, command=command, detach=True,
                     ports=ports, mem_limit=memory, tty=True, stdin_open=True,
                 environment=environment, volumes=volumes,
-                volumes_from=volumes_from, name=name,
-                hostname=hostname, **kwargs)
+                volumes_from=volumes_from, name=name, hostname=hostname,
+                network_disabled=network_disabled, cpu_shares=cpu_shares,
+                **kwargs)
         except Exception, e:
             raise StandardError('There was an error starting the container: {}'.format(
                 e))
@@ -154,9 +156,31 @@ class Host(models.Model):
                 host=self)
             c.description = description
             c.owner = owner
-            c.save()
+
+            self.execute_command(c_id, prov_obj)
+
             status = True
         return c_id, status
+
+    def execute_command(self, c_id, prov_obj):
+        hostname = prov_obj['hostname']
+        name = prov_obj['name']
+        ip = prov_obj['ip']
+
+        Commands.execute(hostname, name, ip)
+
+        container = Container.objects.get(container_id=c_id)
+        provisioning = 'hostname: {}\nname: {}'.format(hostname, name)
+        provisioning = provisioning + '\nip: {}\nuser: {}\npass: {}'.format(ip, 'root', 'admin')
+        container.provisioning = provisioning
+
+        container.save()
+
+        # if len(ips) > len(hosts):
+        #   ips = ips[:len(hosts)]
+        #
+        # if len(ips) < len(hosts):
+        #   hosts = hosts[:len(ips)]
 
     def restart_container(self, container_id=None):
         from applications.models import Application
@@ -240,7 +264,7 @@ class Host(models.Model):
         privileged = cfg.get('Privileged')
         owner = c.owner
         c_id, status = self.create_container(image, command, ports,
-            env, mem, description, volumes, volumes_from, privileged, 
+            env, mem, description, volumes, volumes_from, privileged,
             owner=owner, hostname=hostname)
         # mark as protected if needed
         if c.protected:
@@ -248,4 +272,3 @@ class Host(models.Model):
             container.protected = True
             container.save()
         return c_id, status
-

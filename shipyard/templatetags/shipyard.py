@@ -78,15 +78,28 @@ def container_host_url(interface, hostname):
 
 @register.filter
 @stringfilter
+def format_name(value):
+    """
+    Return container name without slash '/'
+    """
+    if not value:
+        return value
+
+    return value.replace("/", "")
+
+@register.filter
+@stringfilter
 def container_memory_to_mb(value):
     """
     Returns container memory as MB
-
     """
-    if value.strip() and int(value) != 0:
-        return '{0} MB'.format(int(value) / 1048576)
-    else:
-        return _('unlimited')
+
+    if value.strip():
+        value = float(value.strip())
+        if int(value) != 0:
+            return '{0} MB'.format(int(value) / 1048576)
+        else:
+            return _('unlimited')
 
 @register.filter
 @stringfilter
