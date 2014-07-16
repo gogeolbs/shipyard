@@ -39,6 +39,90 @@ To rebuild the app image (if you make changes to the `Dockerfile`, etc.):
 
 Then restart the app and worker containers as explained above.
 
+# Deployment
+
+This is another way (different from [here](https://github.com/shipyard/shipyard/wiki/Deployment)) to setup up your production environment with shipyard on multiple hosts.
+
+~~~
+
+        +-----------------------+
+        |                       | Host Port Mappings:
+        |   shipyard/redis      |
+        |                       | 6379 (shipyard/redis)
+        |   IP: 192.168.1.3     |
+        |                       |
+        +-----------+-----------+
+                    |
+        +-----------v-----------+
+        |                       |
+        |    shipyard/router    |
+        |                       |
+        |   IP: 192.168.1.4     |
+        |                       |
+        +-----------+-----------+
+                    |
+        +-----------v-----------+
+        |                       | Host Port Mappings:
+        |      shipyard/lb      |
+        |                       | 80   (shipyard/lb)
+        |   IP: 192.168.1.5     | 443  (shipyard/lb)
+        |                       |
+        +-----------+-----------+
+                    |
+        +-----------v-----------+
+        |                       | Host Port Mappings:
+        |      shipyard/db      |
+        |                       | 5432 (shipyard/db)
+        |   IP: 192.168.1.6     |
+        |                       |
+        +-----------+-----------+
+                    |
+        +-----------v-----------+
+        |                       | Host Port Mappings:
+        |   shipyard/shipyard   |
+        |                       | 8000 (shipyard/shipyard)
+        |   IP: 192.168.1.7     |
+        |                       |
+        +-----------------------+
+
+~~~
+
+You can see container's network with the command:
+
+~~~ bash
+docker inspect --format='{{.NetworkSettings.IPAddress}}' shipyard_redis
+~~~
+
+## Launch Redis
+
+~~~ bash
+docker run -i -t -d --name shipyard_redis shipyard/redis
+~~~
+
+## Launch Router
+
+~~~ bash
+docker run -i -t -d -e REDIS_HOST=192.168.1.3 -e REDIS_PORT=6379 --name shipyard_router shipyard/router
+~~~
+
+## Launch Load balancer
+
+~~~ bash
+docker run -i -t -d -e REDIS_HOST=192.168.1.3 -e REDIS_PORT=6379 -e APP_ROUTER_UPSTREAMS=192.168.1.4 --name shipyard_lb shipyard/lb
+~~~
+
+## Launch Shipyard Database
+
+~~~ bash
+docker run -i -t -d -e DB_PASS=YOUR_DB_PASS --name shipyard_db shipyard/db
+~~~
+
+## Launch Shipyard App
+
+~~~ bash
+docker run -i -t -d -e REDIS_HOST=192.168.1.3 -e REDIS_PORT=6379 -e DB_TYPE=postgresql_psycopg2 -e DB_PORT_5432_TCP_ADDR=192.168.1.6 -e DB_PORT_5432_TCP_PORT=5432 -e DB_USER=YOUR_DB_USER -e DB_ENV_DB_PASS=YOUR_DB_PASS -e ADMIN_PASS=YOUR_ADMIN_PASS --name shipyard --entrypoint /app/.docker/run.sh shipyard/shipyard app master-worker
+~~~
+
 # Features
 
 * Multiple host support
@@ -107,4 +191,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
