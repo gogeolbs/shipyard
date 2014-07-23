@@ -22,7 +22,7 @@ REDIS_PORT=${REDIS_PORT_6379_TCP_PORT:-$REDIS_PORT}
 
 echo "Waiting network interface"
 cd /opt/pipework; ./pipework --wait
-cd "Network interface is up and running!"
+echo "Network interface is up and running!"
 sleep 5 # Just wait a few seconds to network to be really up!
 
 # ---------------------------------------------------------------------------- #

@@ -6,7 +6,7 @@ For help on a task: fab help:<task>
 """
 
 from fabric.decorators import task
-from fabric.api import settings, hide, env, execute, run, cd
+from fabric.api import settings, hide, env, execute, run, cd, sudo
 from config import Config
 
 try:
@@ -20,19 +20,29 @@ except Exception, e:
   docker_bridge = 'docker0'
   net_interface = 'eth0'
 
-def testRemote(array):
-  output = run(' '.join(array))
-  print 'output', output
-
 def test(host):
   execute(testRemote, ['ls', '-lah'], hosts = [host])
 
 def remoteCommand(container_ip, default_gateway, container_name):
-  with hide('running', 'stdout', 'stderr'), cd('/opt/pipework'), settings(warn_only = True):
+  with hide('running', 'stdout', 'stderr'), settings(warn_only = True), cd('/opt/pipework'):
+    print 'Configure IP: {}'.format(container_ip)
     command = 'sudo ./pipework {} -i {} {} {}/24@{}'.format(docker_bridge,
         net_interface, container_name, container_ip, default_gateway)
     output = run(command)
-    return output
+    # print '***************************************'
+    # print '\n\n'
+    # print 'output: {}'.format(output)
+    # print '\n\n'
+    # print '***************************************'
+
+def configureHostname():
+  with settings(user = 'root', password = 'admin'), settings(warn_only = True):
+    output = sudo('echo -e "127.0.0.1\t$(hostname)" >> /cte/hosts')
+    # print '***************************************'
+    # print '\n\n'
+    # print 'output: {}'.format(output)
+    # print '\n\n'
+    # print '***************************************'
 
 @task
 def command(host, container_name, container_ip):
@@ -47,6 +57,7 @@ def command(host, container_name, container_ip):
     print 'container_name --> {}'.format(container_name)
     print 'container_ip --> {}'.format(container_ip)
     execute(remoteCommand, container_ip, default_gateway, container_name, hosts = [host])
+    execute(configureHostname, hosts = [container_ip])
     print ''
     print '*******************************'
   except Exception, e:

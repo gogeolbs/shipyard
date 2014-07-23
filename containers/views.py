@@ -121,7 +121,7 @@ def create_container(request):
             
             # ********************************************** #
 
-            ips = self.configure_ips(ip_range)
+            ips = configure_ips(ip_range)
 
             # ********************************************** #
 
@@ -166,7 +166,7 @@ def create_container(request):
     return render_to_response('containers/create_container.html', ctx,
         context_instance=RequestContext(request))
 
-def configure_ips(self, ip_range):
+def configure_ips(ip_range):
     ips = []
     ip_range = map(int, ip_range)
 
