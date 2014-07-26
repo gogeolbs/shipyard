@@ -59,9 +59,14 @@
                 </dl>
                 <dl class="dl-horizontal">
                     <dt>{% trans 'CPU' %}</dt>
-                    {% with cpu=container.get_meta.Config.CpuShares %}
+                    {% if container.get_meta.Config.CpuShares %}
+                        {% with cpu=container.get_meta.Config.CpuShares %}
+                        {% endwith %}
+                    {% else %}
+                        {% with cpu=container.get_meta.Config.Cpuset %}
+                        {% endwith %}
+                    {% endif %}
                     <dd><span class="label label-{% if cpu %}info{% else %}default{% endif %}">{{cpu|container_cpu}}</dd>
-                    {% endwith %}
                 </dl>
                 <dl class="dl-horizontal">
                     <dt>{% trans 'Memory' %}</dt>
@@ -88,6 +93,10 @@
                 <dl class="dl-horizontal">
                     <dt>{% trans 'Command' %}</dt>
                     <dd>{% if container.get_meta.Config.Cmd %}{{container.get_meta.Config.Cmd|join:" "}}{% else %}{{container.get_meta.Config.Entrypoint|join:" "}}{% endif %}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                    <dt>{% trans 'CPU Set' %}</dt>
+                    <dd>{{container.get_meta.Config.Cpuset|container_cpu_set}}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                     <dt>{% trans 'IP' %}</dt>

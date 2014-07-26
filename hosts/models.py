@@ -78,7 +78,7 @@ class Host(models.Model):
     def create_container(self, image=None, command=None, ports=[],
         environment=[], memory=0, description='', volumes=None, volumes_from='',
         privileged=False, binds=None, links=None, name=None, owner=None,
-        hostname=None, network_disabled=True, cpu_shares=4, prov_obj=None, **kwargs):
+        hostname=None, network_disabled=True, cpu_set='0,3', prov_obj=None, **kwargs):
         if isinstance(command, str) and command.strip() == '':
             command = None
         if isinstance(environment, str) and environment.strip() == '':
@@ -132,6 +132,9 @@ class Host(models.Model):
                 if port.find('/') < 0:
                     port = "{0}/tcp".format(port)
                 port_exposes[port_str] = {}
+
+        if cpu_set and cpu_set != '0-3' and cpu_set != '4-7':
+            cpu_set = '0-3'
         # convert to bool
         if privileged:
             privileged = True
@@ -141,7 +144,7 @@ class Host(models.Model):
                     ports=ports, mem_limit=memory, tty=True, stdin_open=True,
                 environment=environment, volumes=volumes,
                 volumes_from=volumes_from, name=name, hostname=hostname,
-                network_disabled=network_disabled, cpu_shares=cpu_shares,
+                network_disabled=network_disabled, cpu_set=cpu_set,
                 **kwargs)
         except Exception, e:
             raise StandardError('There was an error starting the container: {}'.format(

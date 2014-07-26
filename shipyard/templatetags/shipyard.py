@@ -103,11 +103,35 @@ def container_memory_to_mb(value):
 
 @register.filter
 @stringfilter
+def container_cpu_set(value):
+    """
+    Returns container cpu set
+    """
+
+    string = ""
+
+    if value.strip() and len(value.split("-")) == 2:
+        array = value.split("-")
+        
+        start = int(array[0])
+        end = int(array[1])
+
+        if start == 0 and end == 3:
+            string = "0, 1, 2, 3"
+        elif start == 4 and end == 7:
+            string = "4, 5, 6, 7"
+    elif value.strip() and len(value.split(',')) == 2:
+        array = value.split(",")
+        string = array[0] + " and " + array[1]
+
+    return string
+@register.filter
+@stringfilter
 def container_cpu(value):
     """
     Returns container memory as MB
-
     """
+
     if value.strip() and int(value) != 0:
         return '{}%'.format(value)
     else:

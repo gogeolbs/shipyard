@@ -41,7 +41,7 @@ class CreateContainerForm(forms.Form):
     hostname = forms.CharField(required=False)
     description = forms.CharField(required=False)
     command = forms.CharField(required=False)
-    cpu_shares = forms.ChoiceField(required=True)
+    cpu_set = forms.ChoiceField(required=True)
     memory = forms.CharField(required=False, initial='4096', max_length=8,
         help_text='Memory in MB')
     ip_range = forms.CharField(required=True, help_text=_('range used to define IPs (i.e. 10-20 --> 192.168.88.10 ... 192.168.88.19)'))
@@ -68,7 +68,7 @@ class CreateContainerForm(forms.Form):
                 'hostname',
                 'command',
                 'description',
-                'cpu_shares',
+                'cpu_set',
                 'memory',
                 'ip_range',
                 'environment',
@@ -93,7 +93,7 @@ class CreateContainerForm(forms.Form):
             [x for x in get_image_choices()]
         self.fields['hosts'].choices = \
             [(x.id, x.name) for x in get_available_hosts()]
-        self.fields['cpu_shares'].choices = [(4 , 4)] + [(2, 2), (8, 8)]
+        self.fields['cpu_set'].choices = [('0-3' , '0-3'), ('4-7', '4-7')]
 
 class ImportRepositoryForm(forms.Form):
     repository = forms.CharField(help_text='i.e. ehazlett/logstash')

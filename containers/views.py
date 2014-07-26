@@ -105,7 +105,7 @@ def create_container(request):
             description = form.data.get('description')
             environment = form.data.get('environment')
             command = form.data.get('command')
-            cpu_shares = int(form.data.get('cpu_shares'))
+            cpu_set = form.data.get('cpu_set')
             memory = form.data.get('memory', 0)
             ip_range = form.data.get('ip_range').split('-')
             links = form.data.get('links', None)
@@ -146,7 +146,7 @@ def create_container(request):
                         volumes_from=volumes_from, privileged=privileged,
                         links=links, name=name, owner=user,
                         hostname=hostname, network_disabled=network_disabled,
-                        cpu_shares=4, prov_obj=prov_obj)
+                        cpu_set=cpu_set, prov_obj=prov_obj)
                     messages.add_message(request, messages.INFO, _('Created') + ' {0}'.format(
                         image))
 
